@@ -7,6 +7,21 @@ extern osMessageQId displayQueueHandle;
 
 osEvent event;
 
+void display_values(uint16_t bat_1, uint16_t bat_2, uint16_t temp_1, uint16_t temp_2) {
+    char value[16];
+
+
+    snprintf(value, 16, "A:%5.1d", bat_1);
+    TM_ILI9341_Puts(170, 80, value, &TM_Font_11x18, ILI9341_COLOR_WHITE, ILI9341_COLOR_BLUE);
+    snprintf(value, 16, "B:%5.1d", bat_2);
+    TM_ILI9341_Puts(170, 95, value, &TM_Font_11x18, ILI9341_COLOR_WHITE, ILI9341_COLOR_BLUE);
+    snprintf(value, 16, "C:%5.1d", temp_1);
+    TM_ILI9341_Puts(170, 110, value, &TM_Font_11x18, ILI9341_COLOR_WHITE, ILI9341_COLOR_BLUE);
+    snprintf(value, 16, "D:%5.1d", temp_2);
+    TM_ILI9341_Puts(170, 125, value, &TM_Font_11x18, ILI9341_COLOR_WHITE, ILI9341_COLOR_BLUE);
+
+}
+
 void drawPoint(uint16_t X, uint16_t Y)
 {
 	TM_ILI9341_DrawCircle(X, Y, 10, ILI9341_COLOR_BLUE);

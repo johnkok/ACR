@@ -10,16 +10,14 @@ uint8_t touch_pending = 0;
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	if (GPIO_PIN_2 == GPIO_Pin) {
-//      HAL_NVIC_DisableIRQ(EXTI2_IRQn);
 	  touch_pending = 1;
 	}
 }
 
-
 void StartTouchTask(void const * argument) {
 	uint8_t din[3];
 	uint8_t dout[3];
-	volatile uint8_t pos[4];
+	uint8_t pos[4];
 	uint16_t x;
 	uint16_t y;
 
@@ -31,13 +29,16 @@ void StartTouchTask(void const * argument) {
 		}
 
 		/* 0x0B/0x06
+		 *  v
 		 *  ------------------
 		 *  |                |
 		 *  |                |
 		 *  |                |
 		 *  ------------------
+		 *                   ^
 		 *                  0x79/0x75
 		 */
+
 		/*A1 - Y*/
 		dout[0] = 0x90;
 		dout[1] = dout[2] = 0x00;
@@ -59,7 +60,6 @@ void StartTouchTask(void const * argument) {
 		HAL_SPI_TransmitReceive(&hspi3, dout, din, 3, 20);
 		pos[3] = din[1];
 
-
 		/* Normalize */
 		if (pos[0] >= 0x0b && pos[1] >= 0x06 &&
 			pos[0] <= 0x79 && pos[1] <= 0x75 &&
@@ -68,11 +68,7 @@ void StartTouchTask(void const * argument) {
 			x = (((uint32_t)pos[0] - 0x0B) * 320) / (0x79 - 0x0B);
 			qdata = x + (y << 16);
 			osMessagePut( displayQueueHandle, &qdata, 100);
+			osDelay(50);
 		}
-		osDelay(50);
 	}
-
-//	HAL_NVIC_EnableIRQ(EXTI2_IRQn);
-
-	return;
 }

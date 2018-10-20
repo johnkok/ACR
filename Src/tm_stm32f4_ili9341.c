@@ -300,9 +300,14 @@ void TM_ILI9341_INT_Fill(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uin
 	hspi1.Init.DataSize = SPI_DATASIZE_16BIT;
 	HAL_SPI_Init(&hspi1);
 
-	for (i = 0 ; i < pixels_count/1024 ; i++) {
-	//	HAL_SPI_Transmit_DMA(&hspi1, (uint8_t *)temp, 1024);
-		HAL_SPI_Transmit(&hspi1, (uint8_t *)temp, 1024, 10);
+	if ( pixels_count < 1024 ){
+		HAL_SPI_Transmit(&hspi1, (uint8_t *)temp, pixels_count, 5);
+	}
+	else {
+		for (i = 0 ; i < pixels_count/1024 ; i++) {
+		//	HAL_SPI_Transmit_DMA(&hspi1, (uint8_t *)temp, 1024);
+			HAL_SPI_Transmit(&hspi1, (uint8_t *)temp, 1024, 5);
+		}
 	}
 
 	hspi1.Init.DataSize = SPI_DATASIZE_8BIT;

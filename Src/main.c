@@ -76,12 +76,11 @@ UART_HandleTypeDef huart3;
 osThreadId idleTaskHandle;
 osThreadId displayTaskHandle;
 osThreadId touchTaskHandle;
+osThreadId measureTaskHandle;
 osMessageQId displayQueueHandle;
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-osThreadId VoltageTaskHandle;
-osThreadId TemperatureTaskHandle;
 
 /* USER CODE END PV */
 
@@ -101,14 +100,12 @@ static void MX_TIM4_Init(void);
 void StartIdleTask(void const * argument);
 extern void StartDisplayTask(void const * argument);
 extern void StartTouchTask(void const * argument);
+extern void StartMeasureTask(void const * argument);
 static void MX_NVIC_Init(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
-extern void StartVoltageTask(void const * argument);
-extern void StartTemperatureTask(void const * argument);
-extern void StartDisplayTask(void const * argument);
-extern void StartTouchTask(void const * argument);
+extern uint8_t meas_pending;
 
 /* USER CODE END PFP */
 
@@ -184,16 +181,15 @@ int main(void)
   displayTaskHandle = osThreadCreate(osThread(displayTask), NULL);
 
   /* definition and creation of touchTask */
-  osThreadDef(touchTask, StartTouchTask, osPriorityIdle, 0, 256);
+  osThreadDef(touchTask, StartTouchTask, osPriorityLow, 0, 128);
   touchTaskHandle = osThreadCreate(osThread(touchTask), NULL);
+
+  /* definition and creation of measureTask */
+  osThreadDef(measureTask, StartMeasureTask, osPriorityAboveNormal, 0, 256);
+  measureTaskHandle = osThreadCreate(osThread(measureTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-  osThreadDef(VoltageTask, StartVoltageTask, osPriorityNormal, 0, 128);
-  VoltageTaskHandle = osThreadCreate(osThread(VoltageTask), NULL);
-
-  osThreadDef(TemperatureTask, StartTemperatureTask, osPriorityNormal, 0, 128);
-  TemperatureTaskHandle = osThreadCreate(osThread(TemperatureTask), NULL);
 
   /* USER CODE END RTOS_THREADS */
 
@@ -487,7 +483,7 @@ static void MX_TIM4_Init(void)
   htim4.Instance = TIM4;
   htim4.Init.Prescaler = 8400-1;
   htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim4.Init.Period = 10000-1;
+  htim4.Init.Period = 1000-1;
   htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
   {
@@ -642,6 +638,8 @@ void StartIdleTask(void const * argument)
   MX_USB_DEVICE_Init();
 
   /* USER CODE BEGIN 5 */
+  HAL_TIM_Base_Start_IT(&htim4);
+
   /* Infinite loop */
   for(;;)
   {
@@ -668,9 +666,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   }
   /* USER CODE BEGIN Callback 1 */
   if (htim->Instance == TIM4) {
-      /* 1sec timer */
 
-
+      /* 0.1sec timer */
+      meas_pending = 1;
 
   }
   /* USER CODE END Callback 1 */
