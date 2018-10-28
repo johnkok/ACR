@@ -367,6 +367,8 @@ void TM_ILI9341_DisplayOn(void);
  */
 void TM_ILI9341_DisplayOff(void);
 
+void TM_ILI9341_DrawImage(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint32_t imgId);
+
 /**
  * @}
  */

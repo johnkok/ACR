@@ -18,6 +18,7 @@
  */
 #include "tm_stm32f4_ili9341.h"
 #include "stm32f4xx_hal_gpio.h"
+#include "images/images.h"
 
 extern SPI_HandleTypeDef hspi1;
 
@@ -565,3 +566,49 @@ void TM_ILI9341_DrawFilledCircle(int16_t x0, int16_t y0, int16_t r, uint32_t col
         TM_ILI9341_DrawLine(x0 + y, y0 - x, x0 - y, y0 - x, color);
     }
 }
+
+void TM_ILI9341_DrawImage(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint32_t imgId) {
+
+	TM_ILI9341_SetCursorPosition(x0, y0, x0+x1-1, y0+y1-1);
+
+	/* Set command for GRAM data */
+	TM_ILI9341_SendCommand(ILI9341_GRAM);
+
+	/* Send everything */
+	ILI9341_WRX_SET;
+
+	hspi1.Init.DataSize = SPI_DATASIZE_16BIT;
+	HAL_SPI_Init(&hspi1);
+
+	switch(imgId){
+	 	case BAT:
+	 	    HAL_SPI_Transmit(&hspi1, &bat, 95*30, 100);
+	 		break;
+	 	case BAT_R:
+	 	    HAL_SPI_Transmit(&hspi1, &bat_red, 26*7, 100);
+	 		break;
+	 	case BAT_O:
+	 	    HAL_SPI_Transmit(&hspi1, &bat_orange, 26*7, 100);
+	 		break;
+	 	case BAT_G:
+	 	    HAL_SPI_Transmit(&hspi1, &bat_green, 26*7, 100);
+	 		break;
+	 	case THERM:
+	 	    HAL_SPI_Transmit(&hspi1, &therm, 90*30, 100);
+	 		break;
+	 	case BON:
+	 	    HAL_SPI_Transmit(&hspi1, &bon, 40*20, 100);
+	 		break;
+	 	case BOFF:
+	 	    HAL_SPI_Transmit(&hspi1, &boff, 40*20, 100);
+	 		break;
+	 	case ERR:
+	 	    HAL_SPI_Transmit(&hspi1, &error, 36*30, 100);
+	 		break;
+	}
+
+	hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
+	HAL_SPI_Init(&hspi1);
+
+}
+
