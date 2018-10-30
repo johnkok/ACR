@@ -22,8 +22,6 @@
 
 extern SPI_HandleTypeDef hspi1;
 
-uint16_t temp[1024];
-
 /**
  * @brief  Orientation
  * @note   Used private
@@ -279,11 +277,25 @@ void TM_ILI9341_Fill(uint32_t color) {
 
 void TM_ILI9341_INT_Fill(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint16_t color) {
 	uint32_t pixels_count;
-
+	uint16_t *temp;
 	uint32_t i;
-	
-	for (i=0 ; i < 1024 ; i++) {
-        temp[i] = color;
+
+	/* Calculate pixels count */
+	pixels_count = (x1 - x0) * (y1 - y0);
+
+	if (pixels_count > 1024) {
+		temp = malloc(1024 * sizeof(uint16_t));
+		if (!temp) return;
+		for (i=0 ; i < 1024 ; i++) {
+	        temp[i] = color;
+		}
+	}
+	else{
+		temp = malloc(pixels_count);
+		if (!temp) return;
+		for (i=0 ; i < pixels_count ; i++) {
+	        temp[i] = color;
+		}
 	}
 
 	/* Set cursor position */
@@ -292,27 +304,29 @@ void TM_ILI9341_INT_Fill(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uin
 	/* Set command for GRAM data */
 	TM_ILI9341_SendCommand(ILI9341_GRAM);
 	
-	/* Calculate pixels count */
-	pixels_count = (x1 - x0) * (y1 - y0);
-
 	/* Send everything */
 	ILI9341_WRX_SET;
 	
 	hspi1.Init.DataSize = SPI_DATASIZE_16BIT;
 	HAL_SPI_Init(&hspi1);
 
-	if ( pixels_count < 1024 ){
-		HAL_SPI_Transmit(&hspi1, (uint8_t *)temp, pixels_count, 5);
-	}
-	else {
-		for (i = 0 ; i < pixels_count/1024 ; i++) {
-		//	HAL_SPI_Transmit_DMA(&hspi1, (uint8_t *)temp, 1024);
+	while (pixels_count) {
+		if (pixels_count > 1024) {
 			HAL_SPI_Transmit(&hspi1, (uint8_t *)temp, 1024, 5);
+			//HAL_SPI_Transmit_DMA(&hspi1, (uint8_t *)temp, 1024);
+			pixels_count -= 1024;
+		}
+		else {
+			HAL_SPI_Transmit(&hspi1, (uint8_t *)temp, pixels_count, 5);
+			//HAL_SPI_Transmit_DMA(&hspi1, (uint8_t *)temp, pixels_count);
+			pixels_count = 0;
 		}
 	}
 
 	hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
 	HAL_SPI_Init(&hspi1);
+
+	free(temp);
 }
 
 void TM_ILI9341_Delay(volatile unsigned int delay) {
