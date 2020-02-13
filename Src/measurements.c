@@ -18,6 +18,7 @@ extern ADC_HandleTypeDef hadc2;
 void StartMeasureTask(void const * argument) {
 	ADC_ChannelConfTypeDef adc1_ch;
 	ADC_ChannelConfTypeDef adc2_ch;
+	uint16_t temp30, temp110;
 
 	while (1) {
 		while (!meas_pending) {
@@ -88,6 +89,20 @@ void StartMeasureTask(void const * argument) {
 		}
 		osDelay(1);
 		status.solar = HAL_ADC_GetValue(&hadc1) * VOLTAGE_DIV;
+
+		/* Update ADC1 values (ch 13 - solar)*/
+		adc1_ch.Channel = ADC_CHANNEL_16;
+		adc1_ch.Rank = 1;
+		adc1_ch.SamplingTime = 12;
+		adc1_ch.Offset = 0;
+		if (HAL_ADC_ConfigChannel(&hadc1, &adc1_ch) == HAL_OK) {
+			if (HAL_ADC_Start(&hadc1) == HAL_OK) {
+			}
+		}
+		osDelay(3);
+		temp30 = *(uint16_t *)0x1FFF7A2C;
+		temp110 = *(uint16_t *)0x1FFF7A2E;
+		status.temp_3 = 11000 - (temp110 - HAL_ADC_GetValue(&hadc1)) * 8000 / (temp110 - temp30);
 
 		status.time++;
 
